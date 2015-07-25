@@ -31,3 +31,15 @@ snf_search.py [-h] [--num_facilities NUM_FACILITIES]
                    zip_code
 
 Each of the above parameters are named appropriately for their correpsonding fields in the provider data. An additional argument, --csv is added to allow switching between the sqlite (default) implementation and the raw CSV implementation. This is useful if files frequently change and regnerating the db files are not feasible. 
+
+# Scoring providers
+Providers are scored based on their overall rating, their number of deficiencies, and the number of penalties assessed against them, as well as the distance from the provided anchor zip code. 
+
+Scores for each metric are obtained by taking the CDF for the given metric and ranking the provider from 0 to 100 based on where they fall on this CDF. As the range for each of the rating, num_deficiencies, and num_penalties metrics are contained within the given data, a simple percentile is used and effectively ranks each provider against the rest based on that metric.
+
+For distance, a CDF for the average american's commute to work is taken from:
+https://www.rita.dot.gov/bts/sites/rita.dot.gov.bts/files/publications/omnistats/volume_03_issue_04/pdf/entire.pdf
+
+This is then used to convert distance to a provider into a percentile rank comparing the distance to the average american's commute to work. The rationale here is that this is the distance patients are accustomed to traveling, on average. A score is provided from 0 to 100 based on what percentile the distance to the provider falls within this CDF. For example, a provider that is closer than 90% of americans' daily commute gets a score of 90, while one that is farther than 80% of americans' daily commute gets a score of 20. 
+
+A final score is obtained by taking a weighted sum of each of the above 4 metrics, with equal weighting to each, to obtain a score between 0 and 100 for fitness of a provider. 
